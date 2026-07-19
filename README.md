@@ -8,6 +8,10 @@
 
 This allows you to log into multiple accounts on the same website simultaneously without mixing up sessions or polluting your main browser's cookies.
 
+<p align="center">
+  <img src="public/images/split-tabs-demo.png" alt="Snackgnito Demo: Multiple Accounts Simultaneously" width="100%" />
+</p>
+
 ## Features
 
 - **Instant Isolation:** Open any link in an isolated Snackgnito tab from the context menu, or convert your current tab instantly with a keyboard shortcut (`Alt+V`).

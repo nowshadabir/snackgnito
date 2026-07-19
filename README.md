@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/icons/snackgnito.png" alt="Snackgnito Logo" width="128" />
+  <img src="https://raw.githubusercontent.com/nowshadabir/snackgnito/main/public/icons/snackgnito.png" alt="Snackgnito Logo" width="128" />
 </p>
 
 # Snackgnito 🍪🕵️‍♂️
@@ -9,7 +9,7 @@
 This allows you to log into multiple accounts on the same website simultaneously without mixing up sessions or polluting your main browser's cookies.
 
 <p align="center">
-  <img src="public/images/split-tabs-demo.png" alt="Snackgnito Demo: Multiple Accounts Simultaneously" width="100%" />
+  <img src="https://raw.githubusercontent.com/nowshadabir/snackgnito/main/public/images/split-tabs-demo.png" alt="Snackgnito Demo: Multiple Accounts Simultaneously" width="100%" />
 </p>
 
 ## Features

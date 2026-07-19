@@ -1,0 +1,91 @@
+PROJECT: Vapor - Single-Use Tab Extension
+TARGET: Chromium Engines (Chrome, Brave, Edge)
+ARCHITECTURE: Manifest V3 (MV3)
+CORE STACK: TypeScript, Tailwind CSS (for popup/UI injection), Vite (bundler)
+
+=========================================
+1. CORE ARCHITECTURE & MANIFEST STRUCTURE
+=========================================
+The extension relies on intercepting network requests and overriding native DOM APIs to decouple the tab from the browser's persistent storage.
+
+Manifest Requirements (manifest.json):
+- "permissions": 
+    - "declarativeNetRequest": To strip native Cookie headers.
+    - "scripting": To inject the MAIN world API proxy.
+    - "contextMenus": For the right-click trigger.
+    - "storage": To save user preferences (e.g., keyboard shortcuts).
+    - "activeTab": To toggle the current tab.
+- "host_permissions": ["<all_urls>"] (Required to intercept and rewrite fetch/XHR globally).
+- "background": {"service_worker": "background.ts"}
+- "commands": {"toggle-vapor": {"suggested_key": {"default": "Alt+V"}, "description": "Toggle Vapor on active tab"}}
+
+=========================================
+2. DIRECTORY & LOGIC MAP
+=========================================
+/src
+  /background
+    - service-worker.ts: 
+        * Initializes a `Map<number, string>` (tabId -> cookie string) in memory.
+        * Listens for tab close events (`chrome.tabs.onRemoved`) to delete the tab's map entry.
+        * Handles context menu clicks and keyboard shortcuts to inject the content script.
+        * Dynamically updates `declarativeNetRequest` rules to block Set-Cookie headers for active Vapor tabs.
+
+  /content
+    - proxy.ts (Main World Script):
+        * Injected into the `MAIN` execution world (not ISOLATED).
+        * Overwrites `window.fetch` and `XMLHttpRequest.prototype.send`.
+        * Overwrites `Object.getOwnPropertyDescriptor(Document.prototype, 'cookie')`.
+        * Routes all intercepted payloads through `window.postMessage` to communicate with the isolated content script.
+    
+    - isolated.ts (Isolated World Script):
+        * Acts as the bridge between `proxy.ts` and `service-worker.ts`.
+        * Fetches the virtual cookies from the background script and feeds them to the proxy.
+
+  /ui
+    - overlay.ts:
+        * Mounts a Shadow DOM element to prevent the host site's CSS from bleeding into the Vapor UI.
+        * Injects the visual state: A 2px high-contrast border and a bottom-center status pill.
+
+  /popup
+    - index.html & popup.ts:
+        * Minimal interface. A single high-contrast toggle switch indicating if the current tab is "Vaporized."
+
+=========================================
+3. UI / UX SPECIFICATIONS
+=========================================
+Design Language: Minimalist, professional, high-contrast.
+Theme: Light/White-themed Glassmorphism.
+
+The Overlay Pill (Injected via Shadow DOM):
+- Styling: `backdrop-filter: blur(12px); background-color: rgba(255, 255, 255, 0.7);`
+- Border: 1px solid rgba(0, 0, 0, 0.05) with a soft, performance-optimized drop shadow (`box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1)`).
+- Typography: System sans-serif, high-contrast dark gray text (e.g., #111827).
+- Motion: Hardware-accelerated CSS transforms. `transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;`
+
+The Viewport Border:
+- An absolutely positioned `div` with `pointer-events: none; box-sizing: border-box; border: 2px solid #000; opacity: 0.1;` hugging the inner window.
+
+=========================================
+4. DEVELOPMENT ROADMAP
+=========================================
+PHASE 1: The Foundation (Routing & Storage)
+- Initialize Vite + TypeScript environment.
+- Setup MV3 manifest.
+- Build the Service Worker logic to track `tabId` state (Vapor ON vs Vapor OFF).
+- Implement the Context Menu ("Open Link in Vapor Tab").
+
+PHASE 2: The Network Hijack (The Hard Part)
+- Write the `declarativeNetRequest` dynamic rules to strip `Cookie` and `Set-Cookie` headers for Vapor-flagged tab IDs.
+- Write the `MAIN` world script to proxy `document.cookie`. Test by setting a cookie in the console and ensuring it doesn't hit Chrome's application tab.
+- Override `window.fetch` to attach the virtual cookies from the Service Worker.
+
+PHASE 3: The Interface (Glassmorphism & Polish)
+- Build the Shadow DOM injector for the UI overlay.
+- Style the glassmorphic pill and viewport border using Tailwind CSS compilation.
+- Ensure the UI animations are smooth and don't cause layout shift (CLS) on the host page.
+- Build the minimal popup toggle.
+
+PHASE 4: Edge Cases & Testing
+- Test cross-origin requests (CORS handling within the proxy).
+- Test file uploads and multipart/form-data via the hijacked `fetch` API.
+- Ensure memory leaks don't occur when tabs are closed (verify the `Map` clears).

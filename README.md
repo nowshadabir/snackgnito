@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/icons/snackgnito.png" alt="Snackgnito Logo" width="128" />
+</p>
+
 # Snackgnito 🍪🕵️‍♂️
 
 **Snackgnito** (formerly Vapor) is a lightweight, privacy-focused Chrome Extension that allows you to open single-use, isolated tabs. It intercepts and manages cookies in a virtual container, ensuring they never reach your native browser storage.

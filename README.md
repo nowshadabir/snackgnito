@@ -4,7 +4,7 @@
 
 # Snackgnito 🍪🕵️‍♂️
 
-**Snackgnito** (formerly Vapor) is a lightweight, privacy-focused Chrome Extension that allows you to open single-use, isolated tabs. It intercepts and manages cookies in a virtual container, ensuring they never reach your native browser storage.
+**Snackgnito** (formerly Snackgnito) is a lightweight, privacy-focused Chrome Extension that allows you to open single-use, isolated tabs. It intercepts and manages cookies in a virtual container, ensuring they never reach your native browser storage.
 
 This allows you to log into multiple accounts on the same website simultaneously without mixing up sessions or polluting your main browser's cookies.
 
@@ -34,8 +34,8 @@ Snackgnito works by dynamically rewriting HTTP headers and proxying the JavaScri
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/nowshadabir/vapor.git
-   cd vapor
+   git clone https://github.com/nowshadabir/snagnito.git
+   cd snackgnito
    ```
 2. Install dependencies:
    ```bash
@@ -66,7 +66,7 @@ npm run build
 ## Contributing
 
 Contributions, issues, and feature requests are welcome! 
-Feel free to check [issues page](https://github.com/nowshadabir/vapor/issues).
+Feel free to check [issues page](https://github.com/nowshadabir/snagnito/issues).
 
 ## License
 

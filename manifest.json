@@ -20,7 +20,7 @@
     "type": "module"
   },
   "commands": {
-    "toggle-vapor": {
+    "toggle-snackgnito": {
       "suggested_key": {
         "default": "Alt+V"
       },

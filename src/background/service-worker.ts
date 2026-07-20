@@ -1,19 +1,19 @@
 // Helper functions for async storage
-async function getVaporTab(tabId: number): Promise<string | null> {
+async function getSnackgnitoTab(tabId: number): Promise<string | null> {
   const data = await chrome.storage.session.get(tabId.toString());
   return data[tabId.toString()] !== undefined ? (data[tabId.toString()] as string) : null;
 }
 
-async function setVaporTab(tabId: number, cookieString: string) {
+async function setSnackgnitoTab(tabId: number, cookieString: string) {
   await chrome.storage.session.set({ [tabId.toString()]: cookieString });
 }
 
-async function removeVaporTab(tabId: number) {
+async function removeSnackgnitoTab(tabId: number) {
   await chrome.storage.session.remove(tabId.toString());
 }
 
-async function checkIfVaporTab(tabId: number): Promise<boolean> {
-  return (await getVaporTab(tabId)) !== null;
+async function checkIfSnackgnitoTab(tabId: number): Promise<boolean> {
+  return (await getSnackgnitoTab(tabId)) !== null;
 }
 
 function mergeCookieString(existingCookies: string, newCookiePart: string): string {
@@ -88,14 +88,14 @@ async function updateDNRRules(tabId: number, cookieString: string) {
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "open-vapor-tab",
-    title: "Open Link in Vapor Tab",
+    id: "open-snackgnito-tab",
+    title: "Open Link in Snackgnito Tab",
     contexts: ["link"]
   });
   
   chrome.contextMenus.create({
-    id: "vaporize-current-tab",
-    title: "Vaporize This Tab",
+    id: "snackgnito-current-tab",
+    title: "Make this a Snackgnito Tab",
     contexts: ["page"]
   });
 });
@@ -107,25 +107,25 @@ chrome.runtime.onStartup.addListener(async () => {
     const tabId = Number(key);
     if (!isNaN(tabId)) {
       await updateDNRRules(tabId, value as string);
-      console.log(`Restored DNR rule for vapor tab: ${tabId}`);
+      console.log(`Restored DNR rule for snackgnito tab: ${tabId}`);
     }
   }
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId === "open-vapor-tab" && info.linkUrl) {
+  if (info.menuItemId === "open-snackgnito-tab" && info.linkUrl) {
     chrome.tabs.create({ url: info.linkUrl }, async (newTab) => {
       if (newTab.id) {
-        await setVaporTab(newTab.id, ""); 
+        await setSnackgnitoTab(newTab.id, ""); 
         await updateDNRRules(newTab.id, ""); // Initialize empty cookie jar for this tab
-        console.log(`Vapor tab created: ${newTab.id}`);
+        console.log(`Snackgnito tab created: ${newTab.id}`);
       }
     });
-  } else if (info.menuItemId === "vaporize-current-tab" && tab && tab.id) {
-    await setVaporTab(tab.id, "");
+  } else if (info.menuItemId === "snackgnito-current-tab" && tab && tab.id) {
+    await setSnackgnitoTab(tab.id, "");
     await updateDNRRules(tab.id, "");
     chrome.tabs.reload(tab.id, { bypassCache: true }); // Reload to ensure proxy scripts initialize cleanly
-    console.log(`Current tab vaporized: ${tab.id}`);
+    console.log(`Current tab snackgnito tab: ${tab.id}`);
   }
 });
 
@@ -137,22 +137,22 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
 });
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
-  if (await checkIfVaporTab(tabId)) {
-    await removeVaporTab(tabId);
+  if (await checkIfSnackgnitoTab(tabId)) {
+    await removeSnackgnitoTab(tabId);
     await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [tabId] });
-    console.log(`Vapor tab closed, cleaned up state for tab: ${tabId}`);
+    console.log(`Snackgnito tab closed, cleaned up state for tab: ${tabId}`);
   }
 });
 
 // Handle tab replacements (e.g., navigating from New Tab Page to a website)
 chrome.tabs.onReplaced.addListener(async (addedTabId, removedTabId) => {
-  if (await checkIfVaporTab(removedTabId)) {
-    const cookies = await getVaporTab(removedTabId);
-    await setVaporTab(addedTabId, cookies || "");
+  if (await checkIfSnackgnitoTab(removedTabId)) {
+    const cookies = await getSnackgnitoTab(removedTabId);
+    await setSnackgnitoTab(addedTabId, cookies || "");
     await updateDNRRules(addedTabId, cookies || "");
-    await removeVaporTab(removedTabId);
+    await removeSnackgnitoTab(removedTabId);
     await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [removedTabId] });
-    console.log(`Tab replaced: transferred Vapor state from ${removedTabId} to ${addedTabId}`);
+    console.log(`Tab replaced: transferred Snackgnito state from ${removedTabId} to ${addedTabId}`);
     // Force a reload to clear any leaked state from the original main_frame navigation
     chrome.tabs.reload(addedTabId, { bypassCache: true });
   }
@@ -162,7 +162,7 @@ chrome.tabs.onReplaced.addListener(async (addedTabId, removedTabId) => {
 chrome.webRequest.onHeadersReceived.addListener(
   (details) => {
     if (details.tabId !== -1 && details.responseHeaders) {
-      getVaporTab(details.tabId).then(cookieString => {
+      getSnackgnitoTab(details.tabId).then(cookieString => {
         if (cookieString !== null) {
           let updatedCookie = cookieString;
           
@@ -174,7 +174,7 @@ chrome.webRequest.onHeadersReceived.addListener(
           });
           
           if (updatedCookie !== cookieString) {
-            setVaporTab(details.tabId, updatedCookie).then(() => {
+            setSnackgnitoTab(details.tabId, updatedCookie).then(() => {
               updateDNRRules(details.tabId, updatedCookie);
             });
           }
@@ -189,7 +189,7 @@ chrome.webRequest.onHeadersReceived.addListener(
 // Restore DNR rules lazily — called before any message handler
 // to ensure rules exist after service worker restarts (MV3 lifecycle)
 async function ensureDNRRulesExist(tabId: number): Promise<boolean> {
-  const cookies = await getVaporTab(tabId);
+  const cookies = await getSnackgnitoTab(tabId);
   if (cookies === null) return false;
 
   const existingRules = await chrome.declarativeNetRequest.getSessionRules();
@@ -207,11 +207,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const tabId = sender.tab?.id;
     if (tabId) {
       ensureDNRRulesExist(tabId).then(() => {
-        getVaporTab(tabId).then(cookies => {
+        getSnackgnitoTab(tabId).then(cookies => {
           if (cookies !== null) {
-            sendResponse({ isVaporized: true, cookies: cookies });
+            sendResponse({ isSnackgnitoTab: true, cookies: cookies });
           } else {
-            sendResponse({ isVaporized: false, cookies: "" });
+            sendResponse({ isSnackgnitoTab: false, cookies: "" });
           }
         });
       });
@@ -221,11 +221,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const tabId = sender.tab?.id;
     if (tabId) {
       ensureDNRRulesExist(tabId).then(() => {
-        getVaporTab(tabId).then(async (cookieString) => {
+        getSnackgnitoTab(tabId).then(async (cookieString) => {
           if (cookieString !== null) {
             let updatedCookie = cookieString || "";
             updatedCookie = mergeCookieString(updatedCookie, message.cookie.split(';')[0]);
-            await setVaporTab(tabId, updatedCookie);
+            await setSnackgnitoTab(tabId, updatedCookie);
             await updateDNRRules(tabId, updatedCookie);
           }
           sendResponse({ success: true });
@@ -233,15 +233,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true;
     }
-  } else if (message.action === "IS_VAPORIZED") {
+  } else if (message.action === "IS_SNACKGNITO_TAB") {
     ensureDNRRulesExist(message.tabId).then(() => {
-      checkIfVaporTab(message.tabId).then(isVaporized => sendResponse({ isVaporized }));
+      checkIfSnackgnitoTab(message.tabId).then(isSnackgnitoTab => sendResponse({ isSnackgnitoTab }));
     });
     return true;
-  } else if (message.action === "TOGGLE_VAPOR") {
-    if (message.isVaporized) {
+  } else if (message.action === "TOGGLE_SNACKGNITO") {
+    if (message.isSnackgnitoTab) {
       (async () => {
-        await setVaporTab(message.tabId, "");
+        await setSnackgnitoTab(message.tabId, "");
         await updateDNRRules(message.tabId, "");
         sendResponse({ success: true });
         // Reload AFTER DNR rules are registered so cookies are stripped
@@ -249,7 +249,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
     } else {
       (async () => {
-        await removeVaporTab(message.tabId);
+        await removeSnackgnitoTab(message.tabId);
         await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [message.tabId] });
         sendResponse({ success: true });
         chrome.tabs.reload(message.tabId, { bypassCache: true });
@@ -260,27 +260,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.webNavigation.onCreatedNavigationTarget.addListener(async (details) => {
-  if (await checkIfVaporTab(details.sourceTabId)) {
+  if (await checkIfSnackgnitoTab(details.sourceTabId)) {
     // Option A: Strict isolation, new empty cookie jar
-    await setVaporTab(details.tabId, "");
+    await setSnackgnitoTab(details.tabId, "");
     await updateDNRRules(details.tabId, "");
-    console.log(`Child tab vaporized (Strict Isolation): ${details.tabId} from ${details.sourceTabId}`);
+    console.log(`Child tab snackgnito tab (Strict Isolation): ${details.tabId} from ${details.sourceTabId}`);
   }
 });
 
 chrome.commands.onCommand.addListener((command) => {
-  if (command === "toggle-vapor") {
+  if (command === "toggle-snackgnito") {
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
       const tab = tabs[0];
       if (tab && tab.id) {
-        if (await checkIfVaporTab(tab.id)) {
-          await removeVaporTab(tab.id);
+        if (await checkIfSnackgnitoTab(tab.id)) {
+          await removeSnackgnitoTab(tab.id);
           await chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [tab.id] });
-          console.log(`Vapor toggled OFF via shortcut for tab: ${tab.id}`);
+          console.log(`Snackgnito toggled OFF via shortcut for tab: ${tab.id}`);
         } else {
-          await setVaporTab(tab.id, "");
+          await setSnackgnitoTab(tab.id, "");
           await updateDNRRules(tab.id, "");
-          console.log(`Vapor toggled ON via shortcut for tab: ${tab.id}`);
+          console.log(`Snackgnito toggled ON via shortcut for tab: ${tab.id}`);
         }
         chrome.tabs.reload(tab.id, { bypassCache: true }); // Safe to reload now because DNR is awaited
       }

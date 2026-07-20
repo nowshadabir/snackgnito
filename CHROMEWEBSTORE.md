@@ -95,7 +95,7 @@ Kazi Nowshad
 hello@nowshadabir.com
 
 **Support URL / Email** 
-https://github.com/nowshadabir/vapor/issues
+https://github.com/nowshadabir/snackgnito/issues
 
 
 ## Version History

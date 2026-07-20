@@ -1,23 +1,23 @@
 import tailwindStyles from './overlay.css?inline';
 
-console.log("[Vapor:UI] Overlay injected.");
+console.log("[Snackgnito:UI] Overlay injected.");
 
-// Only mount if the isolated script tells us this is a Vapor tab
+// Only mount if the isolated script tells us this is a Snackgnito tab
 window.addEventListener("message", (event) => {
-  if (event.source !== window || !event.data || event.data.source !== "vapor-isolated") {
+  if (event.source !== window || !event.data || event.data.source !== "snackgnito-isolated") {
     return;
   }
   
   const payload = event.data.payload;
-  // If we receive cookie data, it means it's a vapor tab! Mount the UI.
-  if (payload.action === "COOKIE_DATA" && !document.getElementById('vapor-ui-root')) {
+  // If we receive cookie data, it means it's a snackgnito tab! Mount the UI.
+  if (payload.action === "COOKIE_DATA" && !document.getElementById('snackgnito-ui-root')) {
     mountUI();
   }
 });
 
 function mountUI() {
   const container = document.createElement('div');
-  container.id = 'vapor-ui-root';
+  container.id = 'snackgnito-ui-root';
   // Use a very high z-index to ensure it sits on top of everything
   container.style.position = 'fixed';
   container.style.top = '0';
@@ -46,7 +46,7 @@ function mountUI() {
   // The pill
   const pillContainer = document.createElement('div');
   pillContainer.className = "absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto transition-transform hover:scale-105 duration-300 cursor-pointer";
-  pillContainer.title = "This tab is isolated by Vapor.";
+  pillContainer.title = "This tab is isolated by Snackgnito.";
   
   const pill = document.createElement('div');
   pill.className = "flex items-center justify-center gap-2 px-5 py-2.5 bg-white/70 backdrop-blur-xl border border-white/20 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] text-gray-900 font-medium text-sm";
@@ -56,7 +56,7 @@ function mountUI() {
   icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`; // Just using a generic safe/secure icon for now
   
   const text = document.createElement('span');
-  text.innerText = "Vaporized";
+  text.innerText = "Snackgnito Tab";
   text.className = "tracking-wide";
   
   pill.appendChild(icon);
